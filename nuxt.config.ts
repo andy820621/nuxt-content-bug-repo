@@ -67,6 +67,9 @@ export default defineNuxtConfig({
 		},
 	},
 	vite: {
+		optimizeDeps: {
+			exclude: ["@nuxtjs/mdc"],
+		},
 		build: {
 			rollupOptions: {
 				treeshake: true,

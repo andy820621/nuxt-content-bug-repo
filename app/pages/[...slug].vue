@@ -1,49 +1,41 @@
 <script setup lang="ts">
-const route = useRoute()
-const { locale, localeProperties } = useI18n()
+import { withLeadingSlash } from "ufo";
+import type { Collections } from "@nuxt/content";
 
-const slugPath = computed(() => {
-  const slugParam = route.params.slug
-  if (Array.isArray(slugParam)) {
-    const joined = slugParam.filter(Boolean).join('/')
-    return joined ? `/${joined}` : '/index'
-  }
-  if (typeof slugParam === 'string' && slugParam.length > 0) {
-    return `/${slugParam}`
-  }
-  return '/index'
-})
-
-const collection = computed(() => `content_${locale.value}`)
+const route = useRoute();
+const { locale, localeProperties } = useI18n();
+const slug = computed(() => withLeadingSlash(String(route.params.slug)));
 
 const { data: page } = await useAsyncData(
-  async () => {
-    const result = await queryCollection(collection.value).path(slugPath.value).first()
-    if (!result) {
-      throw createError({ statusCode: 404, statusMessage: 'Page not found' })
-    }
-    return result
-  },
-  {
-    watch: [collection, slugPath],
-  },
-)
+	"page-" + slug.value,
+	async () => {
+		const collection = ("content_" + locale.value) as keyof Collections;
+		const content = await queryCollection(collection).path(slug.value).first();
 
-watch(
-  () => page.value?.seo,
-  (seo) => {
-    if (seo) {
-      useSeoMeta(seo)
-    }
-  },
-  { immediate: true },
-)
+		// Possibly fallback to default locale if content is missing in non-default locale
 
-const dir = computed(() => localeProperties.value?.dir || 'ltr')
+		return content;
+	},
+	{
+		watch: [locale],
+	}
+);
+
+if (!page.value) {
+	throw createError({
+		statusCode: 404,
+		statusMessage: "Page not found",
+		fatal: true,
+	});
+}
+
+if (page.value.seo) useSeoMeta(page.value.seo);
 </script>
 
 <template>
-  <main :dir="dir">
-    <ContentRenderer v-if="page" :value="page" />
-  </main>
+	<ContentRenderer
+		v-if="page"
+		:dir="localeProperties?.dir ?? 'ltr'"
+		:value="page"
+	/>
 </template>
