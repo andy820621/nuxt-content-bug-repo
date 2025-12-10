@@ -68,7 +68,18 @@ export default defineNuxtConfig({
 	},
 	vite: {
 		optimizeDeps: {
-			exclude: ["@nuxtjs/mdc"],
+			exclude: [
+				"@nuxtjs/mdc",
+				"remark-gfm",
+				"remark-emoji",
+				"remark-mdc",
+				"remark-rehype",
+				"rehype-raw",
+				"parse5",
+				"unist-util-visit",
+				"unified",
+				"debug",
+			],
 		},
 		build: {
 			rollupOptions: {
